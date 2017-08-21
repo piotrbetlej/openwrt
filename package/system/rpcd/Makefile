@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcd
-PKG_VERSION:=2014-01-12
-PKG_RELEASE=$(PKG_SOURCE_VERSION)
+PKG_VERSION:=1
 
-PKG_SOURCE_PROTO:=https
-PKG_SOURCE_URL:=https://github.com/piotrbetlej/rpcd.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)
-PKG_SOURCE_VERSION:=3066907113ec609ea1e6fc21f0e301b5aa56063d
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+# Download over git or https/git protocol impossible.
+# Using archive download.
+PKG_SOURCE_URL:=https://github.com/piotrbetlej/rpcd/archive/
+
+# Package source named after github repository branch
+PKG_SOURCE:=iwinfo_cli.tar.gz
+PKG_MAINTAINER:=Piotr Betlej <piotr.betlej@googlemail.com>
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=
@@ -32,11 +32,17 @@ define Build/InstallDev
 	$(CP) $(PKG_BUILD_DIR)/include/rpcd $(1)/usr/include/
 endef
 
+define Build/Prepare
+	tar xvzpf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR)
+	mv $(PKG_BUILD_DIR)/rpcd-iwinfo_cli/* $(PKG_BUILD_DIR)
+	rm -rf $(PKG_BUILD_DIR)/rpcd-iwinfo_cli
+endef
+
 define Package/rpcd/default
   SECTION:=utils
   CATEGORY:=Base system
   TITLE:=OpenWrt ubus RPC backend server
-  DEPENDS:=+libubus +libubox
+  DEPENDS:=+libubus +libubox +libiwinfo
 endef
 
 define Package/rpcd
@@ -58,6 +64,7 @@ define Package/rpcd/install
 	$(INSTALL_BIN) ./files/rpcd.init $(1)/etc/init.d/rpcd
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpcd $(1)/sbin/rpcd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/iwinfo_cli $(1)/sbin/iwinfo_cli
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/unauthenticated.json $(1)/usr/share/rpcd/acl.d/unauthenticated.json
 	$(INSTALL_DIR) $(1)/etc/config
